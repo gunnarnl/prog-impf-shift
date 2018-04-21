@@ -50,6 +50,18 @@ fullgraph <- ggplot(data=datalist, aes(x = stageno, y = freq, colour = worldstat
 ####################
 
 
+#just plotting a couple states
+datalist1 <- filter(datalist, worldstate %in% c("0.1, 0.3", "0.3, 0.7", "0.1, 0.3, 0.5, 0.7, 0.9"))
+smallgraph <- ggplot(data=datalist1, aes(x = stageno, y = freq, colour = worldstate, group = interaction(worldstate, utterance))) + geom_line(aes(linetype = utterance)) + theme_bw() #+ geom_point()
+
+#ggsave("s2-smallgraph.jpg", plot = smallgraph, device = NULL, path = NULL,
+#       scale = 1, width = 10, height = 6,
+#       dpi = 300, limitsize = TRUE)
+
+
+####################
+
+
 #graph colored by "category"
 multistate <- c("0.1, 0.3, 0.5, 0.7, 0.9", "0.1, 0.3, 0.5, 0.7", "0.1, 0.3, 0.5, 0.9", "0.1, 0.3, 0.7, 0.9", "0.1, 0.5, 0.7, 0.9", "0.3, 0.5, 0.7, 0.9", "0.1, 0.3, 0.5", "0.1, 0.3, 0.7", "0.1, 0.5, 0.7", "0.1, 0.3, 0.9", "0.1, 0.5, 0.9", "0.1, 0.7, 0.9", "0.3, 0.5, 0.7", "0.3, 0.5, 0.9", "0.3, 0.7, 0.9", "0.5, 0.7, 0.9")
 twospread <- c("0.1, 0.7", "0.1, 0.9", "0.3, 0.7", "0.3, 0.9", "0.5, 0.7", "0.5, 0.9")
@@ -73,7 +85,7 @@ sumgraph <- ggplot(data=summary, aes(x = stageno, y = meanfreq, colour = statety
 #       dpi = 300, limitsize = TRUE)
 
 
-
+####################
 
 #and now plotting in a different way
 #ehh, I don't think this tells very much b/c they always add up to ~1
