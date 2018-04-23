@@ -6,6 +6,7 @@ library(jsonlite)
 
 #location of this folder on your computer
 setwd("/Users/rebeccajarvis/Documents/prog-impf-shift/s2-level/")
+#setwd("~/git/prog-impf-shift/s2-level/")
 
 datalist <- data.frame()
 
@@ -95,6 +96,13 @@ sumgraph <- ggplot(data=summary, aes(x = stageno, y = meanfreq, colour = statety
 #list2 <- rename(list2, impffreq = IMPF, progfreq = PROG)
 #listgraph <- ggplot(data=list2, aes(x = impffreq, y = progfreq, colour = statetype)) + geom_point(aes(colour = worldstate, shape = as.factor(stageno))) + theme_bw()
 
+####################
 
-
-
+# a faceted plot with all the data
+ggplot(data=datalist,aes(x=stageno,y=freq,color=utterance,group=utterance)) +
+  geom_line(alpha=0.5) +
+  geom_point() +
+  facet_wrap(~worldstate) +
+  scale_color_manual(values=c("red", "blue")) +
+  theme_bw()
+#ggsave("all-plot.png",height=7,width=11)
