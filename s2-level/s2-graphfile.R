@@ -40,6 +40,17 @@ datalist <- filter(datalist, utterance != "NULL")
 #optional further filtering to just plot select world states (can comment out)
 #datalist <- filter(datalist, worldstate %in% c("0.1, 0.3", "0.3, 0.7", "0.1, 0.3, 0.5, 0.7, 0.9"))
 
+
+
+
+
+#graphs
+
+
+
+
+####################
+
 #graph of each worldstate through all states (pretty hard to read)
 fullgraph <- ggplot(data=datalist, aes(x = stageno, y = freq, colour = worldstate, group = interaction(worldstate, utterance))) + geom_line(aes(linetype = utterance)) + theme_bw() #+ geom_point()
 
@@ -88,16 +99,6 @@ sumgraph <- ggplot(data=summary, aes(x = stageno, y = meanfreq, colour = statety
 
 ####################
 
-#and now plotting in a different way
-#ehh, I don't think this tells very much b/c they always add up to ~1
-#I'm not going to bother doing a category version of this one
-#list2 <- datalist #just copying this so I don't mess it up/can plot graphs in any order
-#list2 <- spread(list2, key = utterance, value = freq)
-#list2 <- rename(list2, impffreq = IMPF, progfreq = PROG)
-#listgraph <- ggplot(data=list2, aes(x = impffreq, y = progfreq, colour = statetype)) + geom_point(aes(colour = worldstate, shape = as.factor(stageno))) + theme_bw()
-
-####################
-
 # a faceted plot with all the data
 ggplot(data=datalist,aes(x=stageno,y=freq,color=utterance,group=utterance)) +
   geom_line(alpha=0.5) +
@@ -106,3 +107,63 @@ ggplot(data=datalist,aes(x=stageno,y=freq,color=utterance,group=utterance)) +
   scale_color_manual(values=c("red", "blue")) +
   theme_bw()
 #ggsave("all-plot.png",height=7,width=11)
+
+####################
+
+#other sort of averaging
+datalist$statesort <- ifelse(grepl("0.1, 0.3", datalist$worldstate), "both1and3", 
+                             ifelse(!grepl("0.1", datalist$worldstate), "not1", NA))
+datalist2 <- filter(datalist, !is.na(statesort))
+datalist2 <- group_by(datalist2, statesort, stageno, utterance)
+sum2 <- summarise(datalist2, meanfreq = mean(freq))
+
+graph2 <- ggplot(data=sum2, aes(x = stageno, y = meanfreq, colour = statesort, group = interaction(statesort, utterance))) + geom_line(aes(linetype = utterance)) + theme_bw() + scale_color_manual(values=c("red", "blue"))
+#ggsave("statesort.png",height=7,width=11)
+
+####################
+
+datalist$ev1 <- ifelse(grepl("0.1", datalist$worldstate), 1, NA)
+datalist$ev3 <- ifelse(grepl("0.3", datalist$worldstate), 3, NA)
+datalist$ev5 <- ifelse(grepl("0.5", datalist$worldstate), 5, NA)
+datalist$ev7 <- ifelse(grepl("0.7", datalist$worldstate), 7, NA)
+datalist$ev9 <- ifelse(grepl("0.9", datalist$worldstate), 9, NA)
+
+#not elegant but works
+ev1data <- filter(datalist, !is.na(ev1)) %>%
+  group_by(stageno, utterance) %>%
+  summarise(meanfreq = mean(freq)) %>%
+  mutate(event = "1")
+
+ev3data <- filter(datalist, !is.na(ev3)) %>%
+  group_by(stageno, utterance) %>%
+  summarise(meanfreq = mean(freq)) %>%
+  mutate(event = "3")
+
+ev5data <- filter(datalist, !is.na(ev5)) %>%
+  group_by(stageno, utterance) %>%
+  summarise(meanfreq = mean(freq)) %>%
+  mutate(event = "5")
+
+ev7data <- filter(datalist, !is.na(ev7)) %>%
+  group_by(stageno, utterance) %>%
+  summarise(meanfreq = mean(freq)) %>%
+  mutate(event = "7")
+
+ev9data <- filter(datalist, !is.na(ev9)) %>%
+  group_by(stageno, utterance) %>%
+  summarise(meanfreq = mean(freq)) %>%
+  mutate(event = "9")
+
+eventdata <- rbind(ev1data, ev3data, ev5data, ev7data, ev9data)
+rm(ev1data)
+rm(ev3data)
+rm(ev5data)
+rm(ev7data)
+rm(ev9data)
+
+evgraph <- ggplot(data=eventdata, aes(x = stageno, y = meanfreq, colour = event, group = interaction(event, utterance))) +
+  geom_line(aes(linetype = utterance)) +
+  theme_bw()
+
+#ggsave("evgraph.png",height=7,width=11)
+
