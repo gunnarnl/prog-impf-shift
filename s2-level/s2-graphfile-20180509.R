@@ -10,7 +10,7 @@ setwd("/Users/rebeccajarvis/Documents/prog-impf-shift/s2-level/")
 
 datalist <- data.frame()
 
-for (filename in c("datafiles/prog-5-s2.json", "datafiles/impf-5-s2.json", "datafiles/null-5-s2.json"))
+for (filename in c("datafiles/prog-11-s2.json", "datafiles/impf-11-s2.json", "datafiles/null-11-s2.json"))
 {
   templist <- cbind(filename, fromJSON(filename, flatten=TRUE))
   datalist <- rbind(datalist, templist)
@@ -27,7 +27,7 @@ datalist$x <- substring(datalist$x, 3)
 datalist$x <- gsub('.{1}$', '', datalist$x)
 datalist <- rename(datalist, worldstate = x)
 datalist <- rename(datalist, freq = y)
-datalist$stageno <- factor(datalist$sub,levels = c("emer1", "emer2", "cat", "exp1", "exp2"))
+datalist$stageno <- factor(datalist$sub,levels = c("emer1", "emer2", "emer3", "emer4", "emer5", "cat", "exp1", "exp2", "exp3", "exp4", "exp5"))
 
 datalist$utterance <- ifelse(grepl(pattern = "prog", x = datalist$filename), "PROG",
                              ifelse(grepl(pattern = "impf", x = datalist$filename), "IMPF", "NULL"))
@@ -37,38 +37,10 @@ datalist <- subset(datalist, select = -c(model, sub, filename))
 #I'll filter out nulls for now, since they're pretty uninteresting
 datalist <- filter(datalist, utterance != "NULL")
 
-#optional further filtering to just plot select world states (can comment out)
-#datalist <- filter(datalist, worldstate %in% c("0.1, 0.3", "0.3, 0.7", "0.1, 0.3, 0.5, 0.7, 0.9"))
-
-
-
 
 
 #graphs
 
-
-
-
-####################
-
-#graph of each worldstate through all states (pretty hard to read)
-fullgraph <- ggplot(data=datalist, aes(x = stageno, y = freq, colour = worldstate, group = interaction(worldstate, utterance))) + geom_line(aes(linetype = utterance)) + theme_bw() #+ geom_point()
-
-#ggsave("s2-allstates.jpg", plot = fullgraph, device = NULL, path = NULL,
-#       scale = 1, width = 10, height = 6,
-#       dpi = 300, limitsize = TRUE)
-
-
-####################
-
-
-#just plotting a couple states
-datalist1 <- filter(datalist, worldstate %in% c("0.1, 0.3", "0.3, 0.7", "0.1, 0.3, 0.5, 0.7, 0.9"))
-smallgraph <- ggplot(data=datalist1, aes(x = stageno, y = freq, colour = worldstate, group = interaction(worldstate, utterance))) + geom_line(aes(linetype = utterance)) + theme_bw() #+ geom_point()
-
-#ggsave("s2-smallgraph.jpg", plot = smallgraph, device = NULL, path = NULL,
-#       scale = 1, width = 10, height = 6,
-#       dpi = 300, limitsize = TRUE)
 
 
 ####################
@@ -88,29 +60,13 @@ catgraph <- ggplot(data=datalist, aes(x = stageno, y = freq, colour = statetype)
 #       dpi = 300, limitsize = TRUE)
 
 
-#these lines average across all the states in a "category"
-datalist <- group_by(datalist, statetype, stageno, utterance)
-summary <- summarise(datalist, meanfreq = mean(freq))
-sumgraph <- ggplot(data=summary, aes(x = stageno, y = meanfreq, colour = statetype, group = interaction(statetype, utterance))) + geom_line(aes(linetype = utterance)) + theme_bw() #+ geom_point()
-#ggsave("s2-summary", plot = sumgraph, device = NULL, path = NULL,
-#       scale = 1, width = 8, height = 6,
-#       dpi = 300, limitsize = TRUE)
 
 
 ####################
 
-# a faceted plot with all the data
-ggplot(data=datalist,aes(x=stageno,y=freq,color=utterance,group=utterance)) +
-  geom_line(alpha=0.5) +
-  geom_point() +
-  facet_wrap(~worldstate) +
-  scale_color_manual(values=c("red", "blue")) +
-  theme_bw()
-#ggsave("all-plot.png",height=7,width=11)
 
-####################
 
-#other sort of averaging
+
 datalist$statesort <- ifelse(grepl("0.1, 0.3", datalist$worldstate), "both1and3", 
                              ifelse(!grepl("0.1", datalist$worldstate), "not1", NA))
 datalist2 <- filter(datalist, !is.na(statesort))
@@ -120,7 +76,13 @@ sum2 <- summarise(datalist2, meanfreq = mean(freq))
 graph2 <- ggplot(data=sum2, aes(x = stageno, y = meanfreq, colour = statesort, group = interaction(statesort, utterance))) + geom_line(aes(linetype = utterance)) + theme_bw() + scale_color_manual(values=c("red", "blue"))
 #ggsave("statesort.png",height=7,width=11)
 
+
+
+
 ####################
+
+
+
 
 datalist$ev1 <- ifelse(grepl("0.1", datalist$worldstate), 1, NA)
 datalist$ev3 <- ifelse(grepl("0.3", datalist$worldstate), 3, NA)
@@ -166,4 +128,6 @@ evgraph <- ggplot(data=eventdata, aes(x = stageno, y = meanfreq, colour = event,
   theme_bw()
 
 #ggsave("evgraph.png",height=7,width=11)
+
+
 
