@@ -10,7 +10,7 @@ setwd("/Users/rebeccajarvis/Documents/prog-impf-shift/s2-level/")
 
 datalist <- data.frame()
 
-for (filename in c("datafiles/prog-11-s2.json", "datafiles/impf-11-s2.json", "datafiles/null-11-s2.json"))
+for (filename in c("datafiles/prog-11-s2.json", "datafiles/impf-11-s2.json", "datafiles/null-11-s2.json", "datafiles/null-11add-s2.json", "datafiles/prog-11add-s2.json", "datafiles/impf-11add-s2.json"))
 {
   templist <- cbind(filename, fromJSON(filename, flatten=TRUE))
   datalist <- rbind(datalist, templist)
@@ -27,7 +27,7 @@ datalist$x <- substring(datalist$x, 3)
 datalist$x <- gsub('.{1}$', '', datalist$x)
 datalist <- rename(datalist, worldstate = x)
 datalist <- rename(datalist, freq = y)
-datalist$stageno <- factor(datalist$sub,levels = c("emer1", "emer2", "emer3", "emer4", "emer5", "cat", "exp1", "exp2", "exp3", "exp4", "exp5"))
+datalist$stageno <- factor(datalist$sub,levels = c("emer1", "emer9", "emer8", "emer7", "emer6", "emer2", "emer3", "emer4", "emer5", "cat", "exp1", "exp2", "exp3", "exp4", "exp6", "exp7", "exp8", "exp9", "exp5"))
 
 datalist$utterance <- ifelse(grepl(pattern = "prog", x = datalist$filename), "PROG",
                              ifelse(grepl(pattern = "impf", x = datalist$filename), "IMPF", "NULL"))
@@ -127,7 +127,7 @@ evgraph <- ggplot(data=eventdata, aes(x = stageno, y = meanfreq, colour = event,
   geom_line(aes(linetype = utterance)) +
   theme_bw()
 
-ggsave("evgraph-large.png",height=7,width=11)
+#ggsave("evgraph-large.png",height=7,width=11)
 
 
 
@@ -141,14 +141,21 @@ ggsave("evgraph-large.png",height=7,width=11)
 #two bars: PROG & IMPF
 #facet by state (lots of them...)
 
-eventdata$stageno <- factor(eventdata$stageno, labels = c("10p:1i", "5p:1i", "4p:1i", "3p:1i", "2p:1i", "1p:1i", "1p:2i", "1p:3i", "1p:4i", "1p:5i", "1p:10i"))
+
+eventdata$stageno <- factor(eventdata$stageno, labels = c("10p:1i", "9p:1i", "8p:1i", "7p:1i", "6p:1i", "5p:1i", "4p:1i", "3p:1i", "2p:1i", "1p:1i", "1p:2i", "1p:3i", "1p:4i", "1p:5i", "1p:6i", "1p:7i", "1p:8i", "1p:9i", "1p:10i"))
+
+#narrowing our collection of stages to odd ones only
+eventdata <- filter(eventdata, stageno %in% c("9p:1i", "7p:1i", "5p:1i", "3p:1i", "1p:1i", "1p:3i", "1p:5i", "1p:7i", "1p:9i"))
 
 
+
+#putting the following instead of the second line here gives you a non-stacked plot: geom_bar(stat="identity", width=.5, position = "dodge")
 evbar <- ggplot(data=eventdata, aes(x=event,y=meanfreq,fill=utterance)) +
-  geom_bar(stat="identity", width=.5, position = "dodge") +
-  facet_wrap(~stageno, nrow = 2) +
+  geom_bar(stat="identity") +
+  scale_fill_manual(values = c("red", "blue")) +
+  facet_wrap(~stageno, nrow = 1) +
   theme_bw()
 
-ggsave("evbar.png",height=7,width=11)
+ggsave("fig-stacked_bar-9_state.png",height=6,width=11)
 
 
