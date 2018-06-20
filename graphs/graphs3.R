@@ -192,7 +192,48 @@ evbar <- ggplot(data=eventdata, aes(x=event,y=meanfreq,fill=utterance)) +
 ##############
 #display ugh
 
-#current cheat solution
-combograph <- grid.arrange(graphl1, evbar, nrow=2)
-combogrob <- arrangeGrob(graphl1, evbar, nrow=2)
-ggsave("fig-l1_s2-combo_attempt_1.png", combogrob, height=7,width=11)
+##current cheat solution
+#combograph <- grid.arrange(graphl1, evbar, nrow=2)
+#combogrob <- arrangeGrob(graphl1, evbar, nrow=2)
+#ggsave("fig-l1_s2-combo_attempt_1.png", combogrob, height=7,width=11)
+
+
+eventdata$event <- paste("T", eventdata$event, sep = "")
+eventdata <- rename(eventdata, Stage = stageno) %>%
+  rename(Utterance = utterance) %>%
+  rename(Event = event) %>%
+  rename(S2_Frequency = meanfreq)
+data <- rename(data, L1_Frequency = Probability)
+
+
+bigdata <- merge(data, eventdata)
+
+bigdata <- gather(bigdata, L1_Frequency, S2_Frequency, key = "Actor", value = "Probability")
+bigdata$Actor <- substring(bigdata$Actor, 1, 2)
+bigdata$actoralpha <- as.factor(ifelse(bigdata$Actor == "S2", 0.5, 1))
+
+#this is REALLY cheap, but I think it'll work
+#magically multiply all S2 probabilities by 0.4
+#in the graph:
+###add a new scale on the right that's spread out (so 0.4 on the left corresponds to 1 on the right)
+bigdata$probscalar <- ifelse(bigdata$Actor == "S2", 0.4, 1)
+bigdata <- mutate(bigdata, Probability = Probability * probscalar)
+
+bigdata$Utt_Actor <- paste(bigdata$Utterance, bigdata$Actor, sep = "_")
+bigdata$Utt_Actor <- ordered(bigdata$Utt_Actor, levels = c("IMPF_L1", "PROG_L1", "IMPF_S2", "PROG_S2"))
+
+
+
+
+bigbar <- ggplot(data=bigdata, aes(x=Event,y=Probability,fill=Utt_Actor)) +
+  geom_bar(stat="identity", position = "dodge") +
+  scale_fill_manual(name = "Utterance and Actor", values = c("red", "blue", "#ffaaaa", "#aaacff")) +
+  facet_wrap(~Stage, nrow = 2) +
+  theme_bw() +
+  scale_y_continuous(breaks = seq(0, 0.4, 0.1), "L1 Probability", sec.axis=sec_axis(~.*1/0.4, name="S2 Probability") )
+
+#ggsave("fig-l1_s2-combo_attempt_2.png", bigbar, height=7,width=12)
+
+
+
+
