@@ -252,16 +252,16 @@ allgraph <- l1graph +
 
 s2graph <- ggplot(data = bigs2, aes(x=Event,y=Probability,fill=Utt_Actor)) +
   geom_bar(stat="identity", width = 0.9, alpha = 0.4, show.legend=F) +
-  scale_fill_manual(name = "Utterance and Actor", values = c("red", "red", "blue", "blue")) +
+  scale_fill_manual(name = "Utterance", values = c("red", "red", "blue", "blue")) +
   facet_wrap(~Stage, nrow = 2) +
   theme_bw() +
   scale_y_continuous(breaks = seq(0, 0.4, 0.1), "L1 Probability", sec.axis=sec_axis(~.*1/0.4, name="S2 Probability") )
 
 allgraph <- s2graph +
-  geom_bar(data = bigl1, aes(x=Event, y = Probability, fill = Utt_Actor),stat="identity", position = "dodge", width = 0.5, colour = "black", show.legend=F)
+  geom_bar(data = bigl1, aes(x=Event, y = Probability, fill = Utterance),stat="identity", position = "dodge", width = 0.5, colour = "black", show.legend=F)
 
 
-ggsave("fig-l1_s2-combo_attempt_4.png", allgraph, height=7,width=12)
+#ggsave("fig-l1_s2-combo_attempt_4.png", allgraph, height=7,width=12)
 
 
 
