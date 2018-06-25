@@ -232,8 +232,36 @@ bigbar <- ggplot(data=bigdata, aes(x=Event,y=Probability,fill=Utt_Actor)) +
   theme_bw() +
   scale_y_continuous(breaks = seq(0, 0.4, 0.1), "L1 Probability", sec.axis=sec_axis(~.*1/0.4, name="S2 Probability") )
 
-#ggsave("fig-l1_s2-combo_attempt_2.png", bigbar, height=7,width=12)
+ggsave("fig-l1_s2-combo_attempt_2.png", bigbar, height=7,width=12)
 
+
+bigl1 <- filter(bigdata, Actor == "L1")
+bigs2 <- filter(bigdata, Actor == "S2")
+
+l1graph <- ggplot(data = bigl1, aes(x=Event,y=Probability,fill=Utt_Actor), colour = c("red", "blue")) +
+  geom_bar(stat="identity", position = "dodge", width = 0.5) +
+  #scale_fill_manual(name = "Utterance and Actor", values = c("red", "blue")) +
+  facet_wrap(~Stage, nrow = 2) +
+  theme_bw() +
+  scale_y_continuous(breaks = seq(0, 0.4, 0.1), "L1 Probability", sec.axis=sec_axis(~.*1/0.4, name="S2 Probability") )
+
+allgraph <- l1graph +
+  geom_bar(data = bigs2, aes(x=Event, y = Probability, fill = Utt_Actor),stat="identity", alpha = 0.5, width = 1)
+
+
+
+s2graph <- ggplot(data = bigs2, aes(x=Event,y=Probability,fill=Utt_Actor)) +
+  geom_bar(stat="identity", width = 0.9, alpha = 0.4, show.legend=F) +
+  scale_fill_manual(name = "Utterance and Actor", values = c("red", "red", "blue", "blue")) +
+  facet_wrap(~Stage, nrow = 2) +
+  theme_bw() +
+  scale_y_continuous(breaks = seq(0, 0.4, 0.1), "L1 Probability", sec.axis=sec_axis(~.*1/0.4, name="S2 Probability") )
+
+allgraph <- s2graph +
+  geom_bar(data = bigl1, aes(x=Event, y = Probability, fill = Utt_Actor),stat="identity", position = "dodge", width = 0.5, colour = "black", show.legend=F)
+
+
+ggsave("fig-l1_s2-combo_attempt_4.png", allgraph, height=7,width=12)
 
 
 
