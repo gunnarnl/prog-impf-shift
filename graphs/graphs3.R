@@ -10,6 +10,7 @@ library(gridExtra)
 library(lattice)
 
 setwd("/Users/rebeccajarvis/Documents/prog-impf-shift/graphs/")
+#setwd("~/git/prog-impf-shift/graphs/")
 
 #getting and processing L1 data
 
@@ -250,18 +251,18 @@ allgraph <- l1graph +
 
 
 
-s2graph <- ggplot(data = bigs2, aes(x=Event,y=Probability,fill=Utt_Actor)) +
-  geom_bar(stat="identity", width = 0.9, alpha = 0.4, show.legend=F) +
-  scale_fill_manual(name = "Utterance", values = c("red", "red", "blue", "blue")) +
-  facet_wrap(~Stage, nrow = 2) +
+allgraph <- ggplot(data = bigs2, aes(x=Event,y=Probability,fill=Utt_Actor)) +
+  geom_bar(stat="identity", width = 0.9, alpha = 1, color="darkgray") + #, show.legend=F) +
+  scale_fill_manual(name = "Utterance:", values = c("blue", "#b5c1ff","red", "#ffb9b9")) +
+  facet_grid(.~Stage) +
+  xlab("event index") +
   theme_bw() +
-  scale_y_continuous(breaks = seq(0, 0.4, 0.1), "L1 Probability", sec.axis=sec_axis(~.*1/0.4, name="S2 Probability") )
+  scale_y_continuous(breaks = seq(0, 0.4, 0.1), name = expression("L"[1]*" probability"), sec.axis=sec_axis(~.*1/0.4, name= expression("S"[2]*" probability") )) + 
+  geom_bar(data = bigl1, aes(x=Event, y = Probability, fill = Utt_Actor),stat="identity", position = "dodge", width = 0.5, colour = "black", show.legend=T) +
+  theme(legend.position="bottom")
+allgraph
 
-allgraph <- s2graph +
-  geom_bar(data = bigl1, aes(x=Event, y = Probability, fill = Utterance),stat="identity", position = "dodge", width = 0.5, colour = "black", show.legend=F)
-
-
-#ggsave("fig-l1_s2-combo_attempt_4.png", allgraph, height=7,width=12)
+#ggsave("fig-l1_s2-combo_attempt_6.png", allgraph, height=2.1,width=9.6)
 
 
 
