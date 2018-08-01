@@ -1,0 +1,176 @@
+//Generate the state space given a number of events
+var stateGen = function(numberBins) {
+  var stateSoFar = []
+  var binSize = 1 / numberBins
+  var binArray = _.range(0, numberBins)
+  var eventPop = map(function(x){return Math.round(((binSize/2)+(binSize*x))*100)/100}, binArray)
+  var newEvents = stateSoFar.concat(eventPop)
+  return newEvents
+} 
+
+//Power set helper function, from lexical uncertainty model.
+var powerset = function(set){
+  if(set.length==0){
+    return [set]
+  }
+  var r = powerset(set.slice(1)) // exlude first element
+  var element = [set[0]] // first element
+  var new_r = r.concat(map(function(x){ element.concat(x) }, r))
+  return new_r
+}
+
+//Generate the states and then apply the powerset (removing empty set)
+var allstates = stateGen(5)
+var powersetStates = filter(function(x){return x.length>0},powerset(allstates))
+
+//Return uniform draw of the powerset of states.
+var statePrior = function() {
+  return uniformDraw(powersetStates)
+} 
+
+//utterances and utterancePrior function; requires null utt due to threshold semantics
+var utterances = ["prog", "impf",""]
+var cost = {
+  emer1: {"prog": 10, "impf": 1, "": 100},
+  emer2: {"prog": 5, "impf": 1, "": 100},
+  cat: {"prog": 1, "impf": 1, "": 100},
+  exp1: {"prog": 1, "impf": 5, "": 100},
+  exp2: {"prog": 1, "impf": 10, "": 100}
+}
+
+var utterancePrior = function(costs) {
+  var uttProbs = map(function(u) {return Math.exp(-costs[u]) }, utterances);
+  return categorical(uttProbs, utterances);
+};
+
+
+//List of possibe thetas 
+var possibleThetas = [0.4,0.5,0.6,0.7,0.8,0.9,1]
+
+//Generate ordered pair <thetaR, thetaImpf> s.t. thetaImpf is greater than or equal to thetaR
+var thetaGen = function(number, stateSoFar) {
+  var stateSoFar = stateSoFar == undefined ? [] : stateSoFar
+  if (number != -1) {
+    var newThetaN = map(function(x){if (x >= possibleThetas[number]){return [possibleThetas[number], x]}}, possibleThetas)
+    var newThetas = stateSoFar.concat(newThetaN)
+    return thetaGen(number-1, newThetas)
+  }
+  else {
+    return remove(null, stateSoFar)
+  }
+}
+
+
+//the possibleThetas.length argument is essentially an index for the recursive function.
+var thetas = thetaGen(possibleThetas.length)
+
+var thetasPrior = function(){
+  return uniformDraw(possibleThetas)
+}
+
+//Generates the bins from the different thetas
+var thetaBins = function(numberBins, theta) {
+  var newBins = [0]
+  var binSize = theta / numberBins
+  var binArray = _.range(0, numberBins)
+  var binPop = map(function(x){return (binSize)+(binSize*x)}, binArray)
+  var newEvents = newBins.concat(binPop)
+  return newEvents
+}
+
+//meaning fxn: checks to make sure at least one event is contained in every bin.
+var meaningFn = function(state, bins, index, stateSoFar){
+  var stateSoFar = stateSoFar == undefined ? [] : stateSoFar
+  if (index != bins.length-1){
+    var inBin = any(function(x){return x>bins[index] && x<=bins[index+1]}, state)
+    var eventsInBins = stateSoFar.concat(inBin)
+    return meaningFn(state, bins, index+1, eventsInBins)
+  }
+  else {
+    return all(function(x){return x==true}, stateSoFar)
+  }
+}
+
+//Actually apply the meaning function for the utterances, note that impf has existential semantics
+var meaning = function(utterance, thetaR, state) {
+  if (utterance == "prog") {
+    var binsR = thetaBins(nBins, thetaR);
+    return meaningFn(state, binsR, 0)
+  }
+  else if (utterance == "impf") {
+    var thetasT = filter(function(x){return x>=thetaR}, possibleThetas);
+    var thetaTBins = map(function(x){return thetaBins(nBins, x)}, thetasT);
+    return any(function(x){return meaningFn(state, x, 0)}, thetaTBins);
+  }
+  else {
+    return true
+  }
+}
+
+//Alphas and bins
+var alpha = 1
+var nBins = 2
+
+//our actors:
+var literalListener = cache(function(utterance, thetaR) {
+  return Infer({model: function() {
+    var state = statePrior();
+    condition(meaning(utterance, thetaR, state))
+    return state;
+  }});
+});
+
+var speaker = cache(function(state, thetaR, costs) {
+  return Infer({method: "enumerate"}, function() {
+    var utterance = utterancePrior(costs);
+    factor(alpha * literalListener(utterance, thetaR).score(state));
+    return utterance;
+  });
+});
+
+var pragmaticListener = function(utterance, costs) {
+  return Infer({method: "enumerate"}, function() {
+    var state = statePrior();
+    var thetaR = thetasPrior();
+    factor(speaker(state, thetaR, costs).score(utterance));
+    return {state: state, thetaR: thetaR};
+  });
+};
+
+var pragmaticSpeaker = cache(function(state, costs) {
+  Infer({model: function(){
+    var utterance = utterancePrior(costs);
+    factor(marginalize(pragmaticListener(utterance, costs), "state").score(state))
+    return utterance
+  }})
+})
+
+//viz.marginals(pragmaticListener("prog", cost["exp2"]))
+
+
+//want all possible {state, dia} pairs
+var dias = ["emer1", "emer2", "cat", "exp1", "exp2"]
+
+var condStates = filter(function(x){return x.length > 1}, powersetStates)
+
+var conditions2 = map(function(x){
+  map(function(y){
+      return {state: x, dia: y}
+      }, dias)
+}, condStates)
+
+var conditionsMerged = [].concat.apply([], conditions2)
+
+
+var S2predictions = map(function(stim){
+  var S2posterior = pragmaticSpeaker(stim.state, cost[stim.dia])
+  return {
+    x: stim.state,
+    y: Math.exp(S2posterior.score("impf")),
+    sub: stim.dia,
+    model: "S2"
+  }
+}, conditionsMerged)
+
+display("probability for various stages associated with state")
+viz.bar(S2predictions, {groupBy: 'sub'})
