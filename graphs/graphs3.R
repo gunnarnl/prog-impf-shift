@@ -222,7 +222,7 @@ bigdata <- mutate(bigdata, Probability = Probability * probscalar)
 
 bigdata$Utt_Actor <- paste(bigdata$Utterance, bigdata$Actor, sep = "_")
 bigdata$Utt_Actor <- ordered(bigdata$Utt_Actor, levels = c("IMPF_L1", "PROG_L1", "IMPF_S2", "PROG_S2"))
-
+bigdata$Utt_Actor <- ordered(bigdata$Utt_Actor, labels = c("IMPF_L1", "PROG_L1", "IMPF_S2    ", "PROG_S2"))
 
 
 
@@ -233,7 +233,7 @@ bigbar <- ggplot(data=bigdata, aes(x=Event,y=Probability,fill=Utt_Actor)) +
   theme_bw() +
   scale_y_continuous(breaks = seq(0, 0.4, 0.1), "L1 Probability", sec.axis=sec_axis(~.*1/0.4, name="S2 Probability") )
 
-ggsave("fig-l1_s2-combo_attempt_2.png", bigbar, height=7,width=12)
+#ggsave("fig-l1_s2-combo_attempt_2.png", bigbar, height=7,width=12)
 
 
 bigl1 <- filter(bigdata, Actor == "L1")
@@ -265,4 +265,25 @@ allgraph
 #ggsave("fig-l1_s2-combo_attempt_6.png", allgraph, height=2.1,width=9.6)
 
 
+### trim to just seven stages
 
+bigs2t = bigs2[bigs2$Stage!="9p:1i"&bigs2$Stage!="1p:9i",]
+bigs2t$Stage = factor(bigs2t$Stage, labels=c("stage 1", "stage 2", "stage 3", "stage 4", "stage 5", "stage 6", "stage 7"))
+bigs2t$Event = factor(bigs2t$Event, labels=c("t1", "t3", "t5", "t7", "t9"))
+
+bigl1t = bigl1[bigl1$Stage!="9p:1i"&bigl1$Stage!="1p:9i",]
+bigl1t$Stage = factor(bigl1t$Stage, labels=c("stage 1", "stage 2", "stage 3", "stage 4", "stage 5", "stage 6", "stage 7"))
+bigl1t$Event = factor(bigl1t$Event, labels=c("t1", "t3", "t5", "t7", "t9"))
+
+allgraph <- ggplot(data = bigs2t, aes(x=Event,y=Probability,fill=Utt_Actor)) +
+  geom_bar(stat="identity", width = 0.9, alpha = 1, color="darkgray") + #, show.legend=F) +
+  scale_fill_manual(name = "Utterance:", values = c("blue", "#b5c1ff","red", "#ffb9b9")) +
+  facet_grid(.~Stage) +
+  xlab("event index") +
+  theme_bw() +
+  scale_y_continuous(breaks = seq(0, 0.4, 0.1), name = expression("L"[1]*" probability"), sec.axis=sec_axis(~.*1/0.4, name= expression("S"[2]*" probability") )) + 
+  geom_bar(data = bigl1t, aes(x=Event, y = Probability, fill = Utt_Actor),stat="identity", position = "dodge", width = 0.5, colour = "black", show.legend=T) +
+  theme(legend.position="bottom")
+allgraph
+
+#ggsave("SuB-figure.png", allgraph, height=3.1,width=9.6)
